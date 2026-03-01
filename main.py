@@ -2,7 +2,25 @@ from tkinter import *
 from tkinter import messagebox
 import string
 import random
+
 import pyperclip
+import json
+#---------------------------- search password and username ------------------------------- #
+def search():
+    try:
+        with open("data.json", mode="r") as user_data:
+            content = json.load(user_data)
+    except FileNotFoundError:
+        messagebox.showinfo(title="Error", message="No data found, It seems you haven't saved anything yet")
+    else:
+        if website_entry.get():
+            try:
+                messagebox.showinfo(title="saved credentials are : ",
+                                    message=f"Username : {content[website_entry.get()]["username"]} \n"
+                                            f"Password : {content[website_entry.get()]["password"]}")
+            except KeyError as error_website:
+                messagebox.showinfo(title="Not found", message=f"Sorry, Website {error_website} not found")
+
 # ---------------------------- PASSWORD GENERATOR ------------------------------- #
 
 def generate_password():
@@ -37,16 +55,33 @@ def generate_password():
 # ---------------------------- SAVE PASSWORD ------------------------------- #
 
 def save():
+
+    new_data = {
+        website_entry.get() : {
+            "username" : username_entry.get(),
+            "password" : password_entry.get(),
+        }
+    }
+
     if not username_entry.get() or not password_entry.get() or not website_entry.get():
         messagebox.showinfo(title="some required credential are empty", message=f"Please fill all required credential")
 
     else:
-
-        is_ok = messagebox.showinfo(title=f"{website_entry.get()}", message=f"{website_entry.get()} \n {username_entry.get()} \n"
-                                                                            f" {password_entry.get()}")
-        if is_ok and username_entry.get() and password_entry.get() and website_entry.get():
-            with open("data.txt", mode="a") as user_data:
-                user_data.write(f"{website_entry.get()} | {username_entry.get()} | {password_entry.get()} \n")
+        if username_entry.get() and password_entry.get() and website_entry.get():
+            try:
+                with open("data.json", mode="r") as user_data:
+                    # read
+                    content = json.load(user_data)
+            except FileNotFoundError:
+                with open("data.json", mode="w") as user_data:
+                    json.dump(new_data, user_data, indent=4)
+            else:
+                #update
+                content.update(new_data)
+                with open("data.json", mode="w") as user_data:
+                    #write
+                    json.dump(content, user_data, indent=4)
+            finally:
                 website_entry.delete(0, END)
                 username_entry.delete(0, END)
                 password_entry.delete(0, END)
@@ -67,13 +102,13 @@ password_label = Label(text="Password : ",font=("Helvetica", 15))
 password_label.grid(pady=10, row=3, column=0)
 
 #user inputs
-website_entry = Entry(width=75, font=("Helvetica", 15) )
-website_entry.grid(pady=10, row = 1, column=1, columnspan=2)
+website_entry = Entry(width=50, font=("Helvetica", 15) )
+website_entry.grid(pady=10, row = 1, column=1,)
 
-username_entry = Entry(width = 75, font=("Helvetica", 15))
+username_entry = Entry(width = 68, font=("Helvetica", 15))
 username_entry.grid(pady=10,  row = 2, column=1, columnspan=2)
 
-password_entry = Entry(width=55, font=("Helvetica", 15))
+password_entry = Entry(width=50, font=("Helvetica", 15))
 password_entry.grid(pady=10, row = 3, column=1)
 
 #logo
@@ -86,7 +121,10 @@ canvas.grid(pady=10, row=0, column=1)
 generate_password_button = Button(text="Generate Password", font=("Helvetica", 15), command=generate_password)
 generate_password_button.grid(pady=10, row=3, column=2)
 
-add_button = Button(text="Add", font=("Helvetica", 15), width=95, command = save)
-add_button.grid(pady = 10, row = 4, column = 0, columnspan=3)
+add_button = Button(text="Add", font=("Helvetica", 15), width=68, command = save)
+add_button.grid(pady = 10, row = 4, column = 1, columnspan=2)
+
+search_button = Button(text="Search", font=("Helvetica", 15),width=16, command=search)
+search_button.grid(pady = 10, row = 1, column = 2)
 
 window.mainloop()
